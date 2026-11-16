@@ -870,18 +870,25 @@ def main():
     st.subheader(f"{ind} · USD vs {ccy} ({cname})")
     st.caption(f"Debt share {d_pct}% · ERP {erp_pct:.2f}% · project tax rate "
                f"{pct(tax)} ({'U.S.' if tax_choice == 'U.S. rate' else cname})")
+    st.markdown("""<style>
+.coc-card{border:1px solid rgba(49,51,63,.2);border-radius:.6rem;padding:.8rem 1rem;}
+.coc-card h4{margin:0 0 .5rem 0;padding:0;font-size:1.15rem;}
+.coc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;}
+.coc-lbl{font-size:.78rem;opacity:.75;line-height:1.2;}
+.coc-val{font-size:1.45rem;font-weight:600;line-height:1.4;white-space:nowrap;}
+.coc-wacc{color:#2563EB;}
+</style>""", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     for col, cur, re_, rd, rdat, w in [
         (c1, "USD", res["re_usd"], res["rd_usd"], res["rd_at_usd"], res["wacc_usd"]),
         (c2, ccy, res["re_f"], res["rd_f"], res["rd_at_f"], res["wacc_f"]),
     ]:
-        with col:
-            with st.container(border=True):
-                st.markdown(f"### {cur}")
-                m1, m2, m3 = st.columns(3)
-                m1.metric("Cost of equity", pct(re_))
-                m2.metric("Cost of debt (pre-tax)", pct(rd), f"after-tax {pct(rdat)}", delta_color="off")
-                m3.metric("WACC", pct(w))
+        items = [("Cost of equity", re_, ""), ("Cost of debt (pre-tax)", rd, ""),
+                 ("Cost of debt (after-tax)", rdat, ""), ("WACC", w, " coc-wacc")]
+        cells = "".join(f'<div><div class="coc-lbl">{lbl}</div><div class="coc-val{cls}">{pct(v)}</div></div>'
+                        for lbl, v, cls in items)
+        col.markdown(f'<div class="coc-card"><h4>{cur}</h4><div class="coc-grid">{cells}</div></div>',
+                     unsafe_allow_html=True)
 
     def row(item, usd, fx, fmt=pct, src=""):
         return {"Item": item, "USD": fmt(usd), ccy if ccy != "USD" else "USD (selected)": fmt(fx), "Source / rule": src}
